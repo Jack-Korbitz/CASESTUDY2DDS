@@ -407,7 +407,6 @@ wine_test_model  <- wine[-train_indices, ]
 # Create the variable
 predictors <- c(
                 "alcohol"
-               ,"chlorides"
                ,"citric.acid"
                ,"density"
                ,"fixed.acidity"
@@ -475,8 +474,7 @@ wine_test_model  <- wine[-train_indices, ]
 
 # Predictor variables
 predictors <- c(
-                ,"alcohol"
-                ,"chlorides"
+                 "alcohol"
                 ,"citric.acid"
                 ,"density"
                 ,"fixed.acidity"
