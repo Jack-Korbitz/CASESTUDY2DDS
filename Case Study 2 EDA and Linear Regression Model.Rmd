@@ -1,0 +1,525 @@
+---
+title: "Case Study 2 EDA and Linear Regression Model"
+author: "Jack Korbitz"
+date: "2024-11-26"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Load data and packages
+```{r}
+wine = read.csv("/Users/jackkorbitz/School/MSDS_6306/Unit 14 and 15/Wine Train Set.csv", header = TRUE)
+wine = wine |>
+  mutate(location = ifelse(location == "Califormia", "California", location))
+winetest = read.csv("/Users/jackkorbitz/School/MSDS_6306/Unit 14 and 15/Wine Test Set.csv", header = TRUE)
+winetest = winetest |>
+  mutate(location = ifelse(location == "Califormia", "California", location))
+
+library(tidyverse)
+library(plotly)
+library(GGally)
+library(ggthemes)
+library(corrplot)
+library(knitr)
+library(reshape2)
+library(forecast)
+library(stats)
+
+```
+
+# Initial Data Exploration
+
+```{r}
+## Preview the data
+head(wine)
+summary(wine)
+selected_vars = wine[, c("fixed.acidity", "volatile.acidity", "residual.sugar", "pH", "alcohol", "quality")]
+
+# Check if 'quality' exists and convert it to a factor for coloring
+if ("quality" %in% colnames(wine)) {
+  selected_vars$quality <- as.factor(selected_vars$quality)
+}
+
+# Visualize pairwise relationships with 'quality' as color
+ggpairs(
+  selected_vars,
+  columns = 2:5, 
+  aes(color = quality, alpha = .8),
+  title = "Pairwise Relationships with Quality as Color",
+  lower = list(continuous = "smooth"),
+  upper = list(continuous = "cor"))
+```
+
+# Initial EDA of the data
+## Just to better understand how the data is structured and to see if I can pull out any patterns
+```{r}
+# fixed.acidity
+#p = 
+  ggplot(wine, aes(x = as.factor(quality), y = fixed.acidity, fill = as.factor(quality))) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of Fixed Acidity by Quality",
+    x = "Quality",
+    y = "Fixed Acidity",
+    fill = "Quality"
+  ) +
+  facet_grid(type ~ location) +
+  theme_wsj() 
+  #ggplotly(p)
+  
+# volatile.acidity
+#p = 
+  ggplot(wine, aes(x = as.factor(quality), y = volatile.acidity, fill = as.factor(quality))) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of Volatile Acidity by Quality",
+    x = "Quality",
+    y = "Volatile Acidity",
+    fill = "Quality"
+  ) +
+  facet_grid(type ~ location) +
+  theme_wsj() 
+  #ggplotly(p)
+  
+# citric.acid
+#p = 
+  ggplot(wine, aes(x = as.factor(quality), y = citric.acid, fill = as.factor(quality))) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of Citric Acid by Quality",
+    x = "Quality",
+    y = "Citric Acid",
+    fill = "Quality"
+  ) +
+  facet_grid(type ~ location) +
+  theme_wsj() 
+  #ggplotly(p)
+  
+# residual.sugar
+#p = 
+  ggplot(wine, aes(x = as.factor(quality), y = residual.sugar, fill = as.factor(quality))) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of Residual Sugar by Quality",
+    x = "Quality",
+    y = "Residual Sugar",
+    fill = "Quality"
+  ) +
+  facet_grid(type ~ location) +
+  theme_wsj() 
+ # ggplotly(p)
+  
+# chlorides
+#p = 
+  ggplot(wine, aes(x = as.factor(quality), y = chlorides, fill = as.factor(quality))) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of Chlorides by Quality",
+    x = "Quality",
+    y = "Chlorides",
+    fill = "Quality"
+  ) +
+  facet_grid(type ~ location) +
+  theme_wsj() 
+  #ggplotly(p)
+  
+# free.sulfur.dioxide
+#p = 
+  ggplot(wine, aes(x = as.factor(quality), y = free.sulfur.dioxide, fill = as.factor(quality))) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of Free Sulfar Dioxide by Quality",
+    x = "Quality",
+    y = "Free Sulfar Dioxide",
+    fill = "Quality"
+  ) +
+  facet_grid(type ~ location) +
+  theme_wsj() 
+  #ggplotly(p)
+  
+# total.sulfur.dioxide
+#p = 
+  ggplot(wine, aes(x = as.factor(quality), y = total.sulfur.dioxide, fill = as.factor(quality))) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of Total Sulfar Dioxide by Quality",
+    x = "Quality",
+    y = "Total Sulfar Dioxide",
+    fill = "Quality"
+  ) +
+  facet_grid(type ~ location) +
+  theme_wsj() 
+  #ggplotly(p)
+  
+# density
+#p = 
+  ggplot(wine, aes(x = as.factor(quality), y = density, fill = as.factor(quality))) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of Density by Quality",
+    x = "Quality",
+    y = "Density",
+    fill = "Quality"
+  ) +
+  facet_grid(type ~ location) +
+  theme_wsj() 
+  ggplotly(p)
+  
+# pH
+#p = 
+  ggplot(wine, aes(x = as.factor(quality), y = pH, fill = as.factor(quality))) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of pH by Quality",
+    x = "Quality",
+    y = "pH",
+    fill = "Quality"
+  ) +
+  facet_grid(type ~ location) +
+  theme_wsj() 
+  #ggplotly(p)
+  
+# sulphates
+#p = 
+  ggplot(wine, aes(x = as.factor(quality), y = sulphates, fill = as.factor(quality))) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of Sulphates by Quality",
+    x = "Quality",
+    y = "Sulphates",
+    fill = "Quality"
+  ) +
+  facet_grid(type ~ location) +
+  theme_wsj() 
+  #ggplotly(p)
+  
+# alcohol
+#p = 
+  ggplot(wine, aes(x = as.factor(quality), y = alcohol, fill = as.factor(quality))) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of Alcohol by Quality",
+    x = "Quality",
+    y = "Alcohol",
+    fill = "Quality"
+  ) +
+  facet_grid(type ~ location) +
+  theme_wsj() 
+  #ggplotly(p)
+```
+
+# EDA by Type
+## Break out insight by Red vs White wine
+```{r}
+# Create scatterplot
+ggplot(wine, aes(x = density, y = residual.sugar, color = type)) +
+  geom_point(alpha = .6) +
+  labs(
+    title = "Scatterplot of Density vs. Residual Sugar",
+    x = "Density",
+    y = "Residual Sugar",
+    color = "Type"
+  ) +
+  theme_solarized()
+
+
+ggplot(wine, aes(x = total.sulfur.dioxide, y = residual.sugar, color = type)) +
+  geom_point(alpha = .6) +
+  labs(
+    title = "Scatterplot of Total SO2 vs. Residual Sugar",
+    x = "Total Sulfur Dioxide",
+    y = "Residual Sugar",
+    color = "Type"
+  ) +
+  theme_solarized()
+
+ggplot(wine, aes(x = total.sulfur.dioxide, y = volatile.acidity, color = type)) +
+  geom_point(alpha = .6) +
+  labs(
+    title = "Scatterplot of Total SO2 vs. Volatile Acidity",
+    x = "Total Sulfur Dioxide",
+    y = "Volatile Acidity",
+    color = "Type"
+  ) +
+  theme_solarized()
+
+ggplot(wine, aes(x = density, y = alcohol, color = type)) +
+  geom_point(alpha = .6) +
+  labs(
+    title = "Scatterplot of Density vs. Alcohol",
+    x = "Density",
+    y = "Alcohol",
+    color = "Type"
+  ) +
+  theme_solarized()
+
+ggplot(wine, aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide, color = type)) +
+  geom_point(alpha = .6) +
+  labs(
+    title = "Scatterplot of Total SO2 vs. Free SO2",
+    x = "Free SO2",
+    y = "Total SO",
+    color = "Type"
+  ) +
+  theme_solarized()
+
+
+# Create the 3D scatter plot for Type
+plot_ly(data = wine, 
+        x = ~density, 
+        y = ~total.sulfur.dioxide,
+        z = ~volatile.acidity, 
+        type = "scatter3d", 
+        mode = "markers",
+        color = ~as.factor(type), 
+        colors = c("#C8102E","#0033A0"), 
+        marker = list(size = 4, opacity = 0.7)) %>%
+  layout(title = "3D Scatterplot: Type of Wine by Density, Total SO2, and Volatile Acidity",
+         scene = list(xaxis = list(title = "Density"),
+                      yaxis = list(title = "Total SO2"),
+                      zaxis = list(title = "Volatile Acidity")),
+         legend = list(title = list(text = "Legend")))
+```
+
+# EDA by Location
+## Break out insight by California vs Texas
+```{r}
+ggpairs(
+  wine,
+  columns = c('fixed.acidity', 'volatile.acidity', 'citric.acid', 'residual.sugar', 'chlorides', 'free.sulfur.dioxide', 'total.sulfur.dioxide', 'density', 'pH', 'sulphates', 'alcohol','quality'),
+  aes(color = location, alpha = .8),  
+  title = "Pairwise Relationships with Quality as Color",
+  lower = list(continuous = "smooth"),
+  upper = list(continuous = "cor")
+)
+
+
+# Calculate mean quality and count by location
+summary_table <- wine %>%
+  group_by(location) %>%
+  summarise(
+    count = n(),
+    mean_quality = mean(quality, na.rm = TRUE)
+  )
+
+# Display the table using kable
+kable(summary_table, format = "pipe", col.names = c("Location", "Count", "Mean Quality"))
+
+
+ggplot(wine, aes(x = as.factor(quality), fill = location)) +
+  geom_bar(position = "fill", color = "black", width = 0.7) + 
+  geom_text(stat = "count", aes(label = ..count..), 
+            position = position_fill(vjust = 0.5), size = 3, color = "white", fontface = "bold") +  
+  labs(
+    title = "Quality by Location: California vs. Texas",
+    x = "Wine Quality",
+    y = "Proportion",
+    fill = "Location"
+      ) +
+  scale_fill_manual(values = c("California" = "#0033A0", "Texas" = "#C8102E")) +  
+  theme_minimal() +  
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),  
+    axis.title = element_text(size = 12),  
+    axis.text = element_text(size = 10),   
+    legend.position = "top" 
+       )
+
+
+ggplot(wine, aes(x = alcohol, y = volatile.acidity, color = location)) +
+  geom_point(alpha = .6) +
+  labs(
+    title = "Scatterplot of Factor 1 vs. Factor 2",
+    x = "Factor 1",
+    y = "Factor 2",
+    color = "Location"
+  ) +
+  theme_solarized()
+
+
+plot_ly(data = wine, 
+        x = ~alcohol, 
+        y = ~density,
+        z = ~volatile.acidity, 
+        type = "scatter3d", 
+        mode = "markers",
+        color = ~location, 
+        colors = c("#0033A0", "#C8102E"),
+        marker = list(size = 4, opacity = 0.5)) |>
+  layout(title = "3D Scatterplot: Location of Wine by Alcohol, Density, and Volatile Acidity",
+         scene = list(xaxis = list(title = "Alcohol"),
+                      yaxis = list(title = "Density"),
+                      zaxis = list(title = "Volatile Acidity")),
+         legend = list(title = list(text = "Legend")))
+```
+
+# EDA by Quality
+## 3D viz on quality picked from CM
+```{r}
+# create a 3D scatterplot for quality
+plot_ly(data = wine, 
+        x = ~density, 
+        y = ~volatile.acidity,
+        z = ~alcohol, 
+        type = "scatter3d", 
+        mode = "markers",
+        color = ~as.factor(quality),
+        colors = c("#FF0000",  "#FF5733", "#FFFF33","#33FF57","#33FFF6","#0099ff", "#9900ff"),
+        marker = list(size = 4,  opacity = 0.8)) |>
+  layout(title = "3D Scatterplot: Location of Wine by Volatile Acidity, Density, and Alcohol",
+         scene = list(xaxis = list(title = "Volatile Acidity"),
+                      yaxis = list(title = "Density"),
+                      zaxis = list(title = "Alcohol")),
+         legend = list(title = list(text = "Legend")))
+```
+# Create a correlation matrix to select variables for the Linear Regression Model
+
+```{r}
+# Encode 'location' and 'type' as a numeric values
+wine$type <- as.numeric(as.factor(wine$type))
+wine$location <- as.numeric(as.factor(wine$location))
+numeric_columns <- wine[, sapply(wine, is.numeric)]
+# Compute the correlation matrix
+cor_matrix <- cor(numeric_columns, use = "complete.obs")
+# Visualize the correlation matrix with numbers
+library(corrplot)
+corrplot(cor_matrix, method = "color", type = "upper", 
+         tl.col = "black", tl.srt = 45,
+         title = "Correlation Matrix Including Location and Type", mar = c(0, 0, 1, 0),
+         addCoef.col = "black", 
+         number.cex = 0.7,
+         col = colorRampPalette(c("#B2182B", "#D6604D", "#F4A582", "#FDDBC7", "#FFFFFF", "#D1E5F0", "#92C5DE", "#4393C3", "#2166AC"))(200))
+```
+
+# Linear Regression Model
+## Create a linear regression model to predict wine quality
+```{r}
+wine$quality <- as.integer(wine$quality)
+
+# Train/test split (80/20)
+set.seed(123456)
+split <- 0.80
+train_indices <- sample(seq(1, nrow(wine)), round(split * nrow(wine)))
+wine_train_model <- wine[train_indices, ]
+wine_test_model  <- wine[-train_indices, ]
+
+# Create the variable
+predictors <- c(
+                "alcohol"
+               ,"chlorides"
+               ,"citric.acid"
+               ,"density"
+               ,"fixed.acidity"
+               ,"free.sulfur.dioxide"
+               ,"pH"
+               ,"residual.sugar"
+               ,"sulphates"
+               ,"total.sulfur.dioxide"
+               ,"volatile.acidity"
+                )
+
+# Calculate mean and standard deviation for scaling
+scaling_params <- data.frame(
+  mean = colMeans(wine_train_model[predictors]),
+  sd = apply(wine_train_model[predictors], 2, sd)
+)
+
+# Scale training data
+wine_train_model[predictors] <- scale(wine_train_model[predictors])
+
+# Scale test data using training set statistics
+wine_test_model[predictors] <- sweep(wine_test_model[predictors], 2, scaling_params$mean, "-")
+wine_test_model[predictors] <- sweep(wine_test_model[predictors], 2, scaling_params$sd, "/")
+
+# Function to calculate MAE
+calculate_mae <- function(model, model_name, wine_test_model) {
+  # Make predictions on the test set
+  pred <- predict(model, newdata = wine_test_model)
+  
+  # Calculate MAE (Mean Absolute Error)
+  mae <- mean(abs(pred - wine_test_model$quality))
+  
+  # Return the model name and MAE
+  return(data.frame(model = model_name, mae = mae))
+}
+
+# Initialize an empty data frame to store MAE results
+mae_results <- data.frame(model = character(), mae = numeric())
+
+# Linear Regression Model
+# Dynamically create the formula for predictors
+formula <- as.formula(paste("quality ~", paste(predictors, collapse = " + ")))
+lm_model <- lm(formula, data = wine_train_model)
+
+# Calculate MAE for Linear Regression
+lm_mae <- calculate_mae(lm_model, "Linear Regression", wine_test_model)
+mae_results <- rbind(mae_results, lm_mae)
+
+# Print results
+print(mae_results)
+
+```
+
+# Use the model to predict the quality of the test set
+```{r}
+# Ensure 'quality' is an integer (if it's not already)
+wine$quality <- as.integer(wine$quality)
+
+# Train/test split (80/20)
+set.seed(123456)
+split <- 0.80
+train_indices <- sample(seq(1, nrow(wine)), round(split * nrow(wine)))
+wine_train_model <- wine[train_indices, ]
+wine_test_model  <- wine[-train_indices, ]
+
+# Predictor variables
+predictors <- c(
+                ,"alcohol"
+                ,"chlorides"
+                ,"citric.acid"
+                ,"density"
+                ,"fixed.acidity"
+                ,"free.sulfur.dioxide"
+                ,"pH"
+                ,"residual.sugar"
+                ,"sulphates"
+                ,"total.sulfur.dioxide"
+                ,"volatile.acidity"
+                )
+
+# Calculate mean and standard deviation for scaling
+scaling_params <- data.frame(
+  mean = colMeans(wine_train_model[predictors]),
+  sd = apply(wine_train_model[predictors], 2, sd)
+)
+
+# Scale training data
+wine_train_model[predictors] <- scale(wine_train_model[predictors])
+
+# Build the linear regression model
+formula <- as.formula(paste("quality ~", paste(predictors, collapse = " + ")))
+lm_model <- lm(formula, data = wine_train_model)
+
+# Scale the winetest data using training set scaling parameters
+winetest_scaled <- winetest
+winetest_scaled[predictors] <- sweep(winetest_scaled[predictors], 2, scaling_params$mean, "-")
+winetest_scaled[predictors] <- sweep(winetest_scaled[predictors], 2, scaling_params$sd, "/")
+
+# Predict wine quality on the scaled winetest data
+winetest_scaled$quality <- round(predict(lm_model, newdata = winetest_scaled))  # Round predictions to integers
+
+# Create the output dataframe with only `id` and `quality`
+output <- winetest_scaled %>% select(ID, quality)
+
+# Save the output to a user-specified file path
+save_predictions <- function(output, file_path) {
+  write.csv(output, file = file_path, row.names = FALSE)
+  cat("Predictions saved to:", file_path, "\n")
+}
+
+# Example usage: drop the desired file path as a string
+file_path <- "/Users/jackkorbitz/School/MSDS_6306/Unit 14 and 15/Predict_Quality.csv"
+save_predictions(output, file_path)
+
+```
