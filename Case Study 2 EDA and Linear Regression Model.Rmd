@@ -8,6 +8,7 @@ editor_options:
 ---
 
 # Load data
+
 ```{r}
 wine = read.csv("/Users/jackkorbitz/School/MSDS_6306/Unit 14 and 15/Wine Train Set.csv", header = TRUE)
 wine = wine |>
@@ -18,6 +19,7 @@ winetest = winetest |>
 ```
 
 # Load Packages
+
 ```{r}
 library(tidyverse)
 library(plotly)
@@ -56,7 +58,11 @@ ggpairs(
 ```
 
 # Initial EDA of the data
+
 ## Just to better understand how the data is structured and to see if I can pull out any patterns
+
+## take out the "\#" to make plots interactive
+
 ```{r}
 # fixed.acidity
 #p = 
@@ -214,7 +220,9 @@ ggpairs(
 ```
 
 # EDA by Type
+
 ## Break out insight by Red vs White wine
+
 ```{r}
 # Create scatterplot
 ggplot(wine, aes(x = density, y = residual.sugar, color = type)) +
@@ -287,7 +295,9 @@ plot_ly(data = wine,
 ```
 
 # EDA by Location
+
 ## Break out insight by California vs Texas
+
 ```{r}
 ggpairs(
   wine,
@@ -359,7 +369,9 @@ plot_ly(data = wine,
 ```
 
 # EDA by Quality
+
 ## 3D viz on quality picked from CM
+
 ```{r}
 # create a 3D scatterplot for quality
 plot_ly(data = wine, 
@@ -377,15 +389,16 @@ plot_ly(data = wine,
                       zaxis = list(title = "Alcohol")),
          legend = list(title = list(text = "Legend")))
 ```
+
 # Create a correlation matrix to select variables for the Linear Regression Model
 
 ```{r}
 # Encode 'location' and 'type' as a numeric values
-wine$type <- as.numeric(as.factor(wine$type))
-wine$location <- as.numeric(as.factor(wine$location))
-numeric_columns <- wine[, sapply(wine, is.numeric)]
+wine$type = as.numeric(as.factor(wine$type))
+wine$location = as.numeric(as.factor(wine$location))
+numeric_columns = wine[, sapply(wine, is.numeric)]
 # Compute the correlation matrix
-cor_matrix <- cor(numeric_columns, use = "complete.obs")
+cor_matrix = cor(numeric_columns, use = "complete.obs")
 # Visualize the correlation matrix with numbers
 library(corrplot)
 corrplot(cor_matrix, method = "color", type = "upper", 
@@ -397,19 +410,21 @@ corrplot(cor_matrix, method = "color", type = "upper",
 ```
 
 # Linear Regression Model
+
 ## Create a linear regression model to predict wine quality
+
 ```{r}
-wine$quality <- as.integer(wine$quality)
+wine$quality = as.integer(wine$quality)
 
 # Train/test split (80/20)
 set.seed(123456)
-split <- 0.80
-train_indices <- sample(seq(1, nrow(wine)), round(split * nrow(wine)))
-wine_train_model <- wine[train_indices, ]
-wine_test_model  <- wine[-train_indices, ]
+split = 0.80
+train_indices = sample(seq(1, nrow(wine)), round(split * nrow(wine)))
+wine_train_model = wine[train_indices, ]
+wine_test_model  = wine[-train_indices, ]
 
 # Create the variable
-predictors <- c(
+predictors = c(
                 "alcohol"
                ,"citric.acid"
                ,"density"
@@ -423,41 +438,41 @@ predictors <- c(
                 )
 
 # Calculate mean and standard deviation for scaling
-scaling_params <- data.frame(
+scaling_params = data.frame(
   mean = colMeans(wine_train_model[predictors]),
   sd = apply(wine_train_model[predictors], 2, sd)
 )
 
 # Scale training data
-wine_train_model[predictors] <- scale(wine_train_model[predictors])
+wine_train_model[predictors] = scale(wine_train_model[predictors])
 
 # Scale test data using training set statistics
-wine_test_model[predictors] <- sweep(wine_test_model[predictors], 2, scaling_params$mean, "-")
-wine_test_model[predictors] <- sweep(wine_test_model[predictors], 2, scaling_params$sd, "/")
+wine_test_model[predictors] = sweep(wine_test_model[predictors], 2, scaling_params$mean, "-")
+wine_test_model[predictors] = sweep(wine_test_model[predictors], 2, scaling_params$sd, "/")
 
 # Function to calculate MAE
-calculate_mae <- function(model, model_name, wine_test_model) {
+calculate_mae = function(model, model_name, wine_test_model) {
   # Make predictions on the test set
-  pred <- predict(model, newdata = wine_test_model)
+  pred = predict(model, newdata = wine_test_model)
   
   # Calculate MAE (Mean Absolute Error)
-  mae <- mean(abs(pred - wine_test_model$quality))
+  mae = mean(abs(pred - wine_test_model$quality))
   
   # Return the model name and MAE
   return(data.frame(model = model_name, mae = mae))
 }
 
 # Initialize an empty data frame to store MAE results
-mae_results <- data.frame(model = character(), mae = numeric())
+mae_results = data.frame(model = character(), mae = numeric())
 
 # Linear Regression Model
 # Dynamically create the formula for predictors
-formula <- as.formula(paste("quality ~", paste(predictors, collapse = " + ")))
-lm_model <- lm(formula, data = wine_train_model)
+formula = as.formula(paste("quality ~", paste(predictors, collapse = " + ")))
+lm_model = lm(formula, data = wine_train_model)
 
 # Calculate MAE for Linear Regression
-lm_mae <- calculate_mae(lm_model, "Linear Regression", wine_test_model)
-mae_results <- rbind(mae_results, lm_mae)
+lm_mae = calculate_mae(lm_model, "Linear Regression", wine_test_model)
+mae_results = rbind(mae_results, lm_mae)
 
 # Print results
 print(mae_results)
@@ -465,9 +480,10 @@ print(mae_results)
 ```
 
 # Use the model to predict the quality of the test set
+
 ```{r}
 # Ensure 'quality' is an integer (if it's not already)
-wine$quality <- as.integer(wine$quality)
+wine$quality = as.integer(wine$quality)
 
 # Train/test split (80/20)
 set.seed(123456)
@@ -491,52 +507,52 @@ predictors <- c(
                 )
 
 # Calculate mean and standard deviation for scaling
-scaling_params <- data.frame(
+scaling_params = data.frame(
   mean = colMeans(wine_train_model[predictors]),
   sd = apply(wine_train_model[predictors], 2, sd)
 )
 
 # Scale training data
-wine_train_model[predictors] <- scale(wine_train_model[predictors])
+wine_train_model[predictors] = scale(wine_train_model[predictors])
 
 # Build the linear regression model
-formula <- as.formula(paste("quality ~", paste(predictors, collapse = " + ")))
-lm_model <- lm(formula, data = wine_train_model)
+formula = as.formula(paste("quality ~", paste(predictors, collapse = " + ")))
+lm_model = lm(formula, data = wine_train_model)
 
 # Scale the winetest data using training set scaling parameters
 winetest_scaled <- winetest
-winetest_scaled[predictors] <- sweep(winetest_scaled[predictors], 2, scaling_params$mean, "-")
-winetest_scaled[predictors] <- sweep(winetest_scaled[predictors], 2, scaling_params$sd, "/")
+winetest_scaled[predictors] = sweep(winetest_scaled[predictors], 2, scaling_params$mean, "-")
+winetest_scaled[predictors] = sweep(winetest_scaled[predictors], 2, scaling_params$sd, "/")
 
 # Predict wine quality on the scaled winetest data
-winetest_scaled$quality <- round(predict(lm_model, newdata = winetest_scaled))  # Round predictions to integers
+winetest_scaled$quality = round(predict(lm_model, newdata = winetest_scaled))  # Round predictions to integers
 
 # Create the output dataframe with only `id` and `quality`
-output <- winetest_scaled %>% select(ID, quality)
+output = winetest_scaled %>% select(ID, quality)
 
 # Save the output to a user-specified file path
-save_predictions <- function(output, file_path) {
+save_predictions = function(output, file_path) {
   write.csv(output, file = file_path, row.names = FALSE)
   cat("Predictions saved to:", file_path, "\n")
 }
 
 # Example usage: drop the desired file path as a string
-file_path <- "/Users/jackkorbitz/School/MSDS_6306/Unit 14 and 15/Predict_Quality.csv"
+file_path = "/Users/jackkorbitz/School/MSDS_6306/Unit 14 and 15/Predict_Quality.csv"
 save_predictions(output, file_path)
 ```
 
 ```{r}
-wine$quality <- as.integer(wine$quality)
+wine$quality = as.integer(wine$quality)
 
 # Train/test split (80/20)
 set.seed(123456)
-split <- 0.80
-train_indices <- sample(seq(1, nrow(wine)), round(split * nrow(wine)))
-wine_train_model <- wine[train_indices, ]
-wine_test_model  <- wine[-train_indices, ]
+split = 0.80
+train_indices = sample(seq(1, nrow(wine)), round(split * nrow(wine)))
+wine_train_model = wine[train_indices, ]
+wine_test_model  = wine[-train_indices, ]
 
 # Predictor variables
-predictors <- c(
+predictors = c(
   "alcohol",
   "citric.acid",
   "density",
@@ -550,21 +566,21 @@ predictors <- c(
 )
 
 # Calculate mean and standard deviation for scaling
-scaling_params <- data.frame(
+scaling_params = data.frame(
   mean = colMeans(wine_train_model[predictors]),
   sd = apply(wine_train_model[predictors], 2, sd)
 )
 
 # Scale training data
-wine_train_model[predictors] <- scale(wine_train_model[predictors])
+wine_train_model[predictors] = scale(wine_train_model[predictors])
 
 # Build the linear regression model
-formula <- as.formula(paste("quality ~", paste(predictors, collapse = " + ")))
-lm_model <- lm(formula, data = wine_train_model)
+formula = as.formula(paste("quality ~", paste(predictors, collapse = " + ")))
+lm_model = lm(formula, data = wine_train_model)
 
 
 # ---- Shiny UI ----
-ui <- fluidPage(
+ui = fluidPage(
   titlePanel("Wine Quality Predictor"),
   sidebarLayout(
     sidebarPanel(
@@ -592,12 +608,12 @@ ui <- fluidPage(
 
 
 # ---- Shiny Server ----
-server <- function(input, output) {
+server = function(input, output) {
   
   # Raw prediction
-  output$prediction <- renderPrint({
+  output$prediction = renderPrint({
     # Create a new data frame with user inputs
-    new_data <- data.frame(
+    new_data = data.frame(
       alcohol = input$alcohol,
       citric.acid = input$citric_acid,
       density = input$density,
@@ -611,14 +627,14 @@ server <- function(input, output) {
     )
     
     # Scale user inputs using training set scaling parameters
-    new_data <- sweep(new_data, 2, scaling_params$mean, "-")
-    new_data <- sweep(new_data, 2, scaling_params$sd, "/")
+    new_data = sweep(new_data, 2, scaling_params$mean, "-")
+    new_data = sweep(new_data, 2, scaling_params$sd, "/")
     
     # Predict quality using the regression model
-    predicted_quality <- predict(lm_model, new_data)
+    predicted_quality = predict(lm_model, new_data)
     
     # Constrain to range (0 to 10) and round to 2 decimal places
-    constrained_quality <- max(0, min(10, predicted_quality))
+    constrained_quality = max(0, min(10, predicted_quality))
     
     paste("Raw Predicted Quality:", round(constrained_quality, 2))
   })
@@ -639,20 +655,20 @@ server <- function(input, output) {
     )
     
     # Scale user inputs using training set scaling parameters
-    new_data <- sweep(new_data, 2, scaling_params$mean, "-")
-    new_data <- sweep(new_data, 2, scaling_params$sd, "/")
+    new_data = sweep(new_data, 2, scaling_params$mean, "-")
+    new_data = sweep(new_data, 2, scaling_params$sd, "/")
     
     # Predict quality using the regression model
-    predicted_quality <- predict(lm_model, new_data)
+    predicted_quality = predict(lm_model, new_data)
     
     # Constrain to range (0 to 10) and round to nearest integer
-    constrained_quality <- max(0, min(10, predicted_quality))
+    constrained_quality = max(0, min(10, predicted_quality))
     
     paste("Rounded Predicted Quality:", round(constrained_quality))
   })
   
   # 3D Scatterplot of Wine Data
-  output$scatter3d <- renderPlotly({
+  output$scatter3d = renderPlotly({
     plot_ly(data = wine, 
             x = ~density, 
             y = ~volatile.acidity, 
