@@ -42,3 +42,12 @@ The **README.md** file provides a high-level summary of the project’s objectiv
 2. **Model Build**  
    - We discuss how the model was desinged and show the **MAE**.
 
+3. **Shiny App**  
+   - With select inputs you can guess wine qualtiy based off the model above. There is also a 3D model that shows wine quality by
+
+
+| #  | 3D Model Factors                              |
+|----|-----------------------------------------------|
+| 1  | Alcohol                                       |
+| 2  | Density                                       |
+| 3  | Volatile Acidity                              |
