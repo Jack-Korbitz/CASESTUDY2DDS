@@ -13,7 +13,7 @@ Following the initial presentation, we leveraged a secondary dataset, **Wine Tes
 
 Our primary objective is to create a reliable model to predict wine qulaity. By analyzing different patterns, we aim to highlight the most significant factors contributing to wine qulaity.
 
-## Key Attrition Factors
+## Key Wine Quality Factors
 
 Based on our analysis, the following factors have been identified as the most influential in wine qulaity:
 
